@@ -1,1 +1,1 @@
-# eventaura
+# EventAura
