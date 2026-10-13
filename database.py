@@ -44,7 +44,7 @@ class Database:
                 """
             )
 
-    # ---- queries (always parameterized) ----
+    
     def insert_user(self, full_name, username, email, password_hash, role, status, credentials=None):
         with self._connection() as conn:
             cur = conn.execute(

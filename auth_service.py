@@ -12,7 +12,7 @@ DEFAULT_ADMIN = {
     "full_name": "System Administrator",
     "username": "admin",
     "email": "admin@eventaura.local",
-    "password": "Admin@123",  # change after first login once that feature exists
+    "password": "Admin@123",  
 }
 
 
@@ -100,7 +100,7 @@ class AuthService:
         if not identifier or not password:
             raise AuthError("Please enter your username/email and password.")
         row = self._db.find_by_login(identifier)
-        # same message for unknown user and wrong password (no account enumeration)
+        
         if row is None or not PasswordHasher.verify(password, row["password_hash"]):
             raise AuthError("Invalid username/email or password.")
 

@@ -12,7 +12,7 @@ class User(ABC):
         self._email = email
         self._status = status
 
-    # encapsulation: read-only access
+    
     @property
     def id(self):
         return self._id

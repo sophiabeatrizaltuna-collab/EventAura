@@ -10,3 +10,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+git remote set-url origin https://github.com/sophiabeatrizaltuna-collab/EventAura.git
