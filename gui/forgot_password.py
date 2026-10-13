@@ -3,7 +3,7 @@ import random
 import time
 import customtkinter as ctk
 from tkinter import messagebox
-from database import get_connection, hash_password
+from database import get_connection, hash_passwordpyth
 
 
 class ForgotPasswordPage(ctk.CTkFrame):

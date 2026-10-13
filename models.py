@@ -37,7 +37,6 @@ class User(ABC):
     def role(self):
         return self.ROLE
 
-    # polymorphism: each role supplies its own dashboard text
     @property
     @abstractmethod
     def dashboard_title(self):

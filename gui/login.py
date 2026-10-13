@@ -1,64 +1,72 @@
+
 import customtkinter as ctk
-
-from auth_service import AuthError
-
-ACCENT = "#6C4CF1"
+from database import get_connection, hash_password
 
 
-class LoginFrame(ctk.CTkFrame):
-    def __init__(self, master, app, notice=None):
-        super().__init__(master, fg_color="transparent")
-        self._app = app
+class LoginPage(ctk.CTkFrame):
+    def __init__(self, window):
+        super().__init__(window)
+        self.window = window            
 
-        card = ctk.CTkFrame(self, corner_radius=16, border_width=1, border_color="#E2E2EA")
-        card.place(relx=0.5, rely=0.5, anchor="center")
+        box = ctk.CTkFrame(self)
+        box.place(relx=0.5, rely=0.5, anchor="center")
 
-        ctk.CTkLabel(card, text="EventAura", font=("Segoe UI", 30, "bold"), text_color=ACCENT).pack(
-            padx=50, pady=(35, 0)
-        )
-        ctk.CTkLabel(card, text="Log in to continue", font=("Segoe UI", 14), text_color="gray45").pack(pady=(0, 20))
+        title = ctk.CTkLabel(box, text="EventAura", font=("Arial", 28, "bold"))
+        title.pack(padx=60, pady=(30, 5))
+        subtitle = ctk.CTkLabel(box, text="Log in to continue")
+        subtitle.pack(pady=(0, 15))
 
-        self._notice = ctk.CTkLabel(card, text=notice or "", text_color="#1E8E3E", wraplength=320, font=("Segoe UI", 12))
-        self._notice.pack()
+        self.email_entry = ctk.CTkEntry(box, placeholder_text="Email", width=280)
+        self.email_entry.pack(pady=6)
 
-        ctk.CTkLabel(card, text="Username or email", anchor="w").pack(fill="x", padx=50, pady=(6, 0))
-        self._login = ctk.CTkEntry(card, width=320, height=38, placeholder_text="Enter username or email")
-        self._login.pack(padx=50)
+        self.password_entry = ctk.CTkEntry(box, placeholder_text="Password", show="*", width=280)
+        self.password_entry.pack(pady=6)
 
-        ctk.CTkLabel(card, text="Password", anchor="w").pack(fill="x", padx=50, pady=(12, 0))
-        self._password = ctk.CTkEntry(card, width=320, height=38, show="•", placeholder_text="Enter password")
-        self._password.pack(padx=50)
+        self.message_label = ctk.CTkLabel(box, text="", text_color="red")
+        self.message_label.pack()
 
-        self._show = ctk.CTkCheckBox(card, text="Show password", command=self._toggle_password)
-        self._show.pack(anchor="w", padx=50, pady=(10, 0))
+        login_button = ctk.CTkButton(box, text="Log In", width=280, command=self.login)
+        login_button.pack(pady=(8, 4))
 
-        self._error = ctk.CTkLabel(card, text="", text_color="#D93025", wraplength=320, font=("Segoe UI", 12))
-        self._error.pack(pady=(8, 0))
+        forgot_button = ctk.CTkButton(box, text="Forgot Password?", width=280, command=window.show_forgot_password)
+        forgot_button.pack(pady=4)
 
-        ctk.CTkButton(card, text="Log In", width=320, height=40, fg_color=ACCENT, command=self._submit).pack(
-            padx=50, pady=(6, 10)
-        )
+        signup_button = ctk.CTkButton(box, text="Sign Up", width=280, command=window.show_signup)
+        signup_button.pack(pady=(4, 30))
 
-        row = ctk.CTkFrame(card, fg_color="transparent")
-        row.pack(pady=(0, 30))
-        ctk.CTkLabel(row, text="No account yet?", text_color="gray45").pack(side="left")
-        ctk.CTkButton(
-            row, text="Sign up", width=60, fg_color="transparent", text_color=ACCENT,
-            hover_color="#F0ECFF", command=app.show_signup,
-        ).pack(side="left")
+        forgot_button = ctk.CTkButton(
+    box,
+    text="Forgot Password?",
+    width=280,
+    fg_color="transparent",
+    text_color="#6C4CF1",
+    hover_color="#EEEEEE",
+    command=window.show_forgot_password
+)
+forgot_button.pack(pady=(8, 4))
 
-        for entry in (self._login, self._password):
-            entry.bind("<Return>", lambda _e: self._submit())
-        self._login.focus()
+    def login(self):
+        email = self.email_entry.get().strip().lower()
+        password = self.password_entry.get()
 
-    def _toggle_password(self):
-        self._password.configure(show="" if self._show.get() else "•")
-
-    def _submit(self):
-        try:
-            user = self._app.auth.login(self._login.get(), self._password.get())
-        except AuthError as err:
-            self._notice.configure(text="")
-            self._error.configure(text=str(err))
+        if email == "" or password == "":
+            self.message_label.configure(text="Please enter your email and password.")
             return
-        self._app.show_dashboard(user)
+
+        conn = get_connection()
+        user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+        conn.close()
+
+        # 3. check the email and password
+        if user is None or user["password"] != hash_password(password):
+            self.message_label.configure(text="Invalid email or password.")
+            return
+
+        if user["status"] == "pending":
+            self.message_label.configure(text="Your staff application is still being verified.")
+            return
+        if user["status"] != "active":
+            self.message_label.configure(text="This account is not active.")
+            return
+
+        self.window.show_dashboard(user)
