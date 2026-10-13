@@ -68,6 +68,24 @@ class Database:
     def email_exists(self, email):
         with self._connection() as conn:
             return conn.execute("SELECT 1 FROM users WHERE email = ?", (email,)).fetchone() is not None
+    
+    def find_by_email(self, email):
+        """Find a user by email address."""
+        with self._connection() as conn:
+            return conn.execute(
+                "SELECT * FROM users WHERE email = ?",
+                (email.strip().lower(),)
+            ).fetchone()
+
+    def update_password_hash(self, email, password_hash):
+        """Update a user's password hash."""
+        with self._connection() as conn:
+            cur = conn.execute(
+                "UPDATE users SET password_hash = ? WHERE email = ?",
+                (password_hash, email.strip().lower())
+            )
+            return cur.rowcount > 0
+
 
     def count_role(self, role):
         with self._connection() as conn:

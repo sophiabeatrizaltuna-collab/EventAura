@@ -1,6 +1,7 @@
 
 import customtkinter as ctk
-from database import get_connection, hash_password
+from database import Database
+from auth_service import AuthService, AuthError
 
 
 class LoginPage(ctk.CTkFrame):
@@ -34,39 +35,30 @@ class LoginPage(ctk.CTkFrame):
         signup_button = ctk.CTkButton(box, text="Sign Up", width=280, command=window.show_signup)
         signup_button.pack(pady=(4, 30))
 
-        forgot_button = ctk.CTkButton(
-    box,
-    text="Forgot Password?",
-    width=280,
-    fg_color="transparent",
-    text_color="#6C4CF1",
-    hover_color="#EEEEEE",
-    command=window.show_forgot_password
-)
-forgot_button.pack(pady=(8, 4))
-
     def login(self):
         email = self.email_entry.get().strip().lower()
         password = self.password_entry.get()
 
-        if email == "" or password == "":
-            self.message_label.configure(text="Please enter your email and password.")
+        if not email or not password:
+            self.message_label.configure(
+                text="Please enter your email and password."
+            )
             return
 
-        conn = get_connection()
-        user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
-        conn.close()
+        from database import Database
+        from auth_service import AuthService, AuthError
 
-        # 3. check the email and password
-        if user is None or user["password"] != hash_password(password):
-            self.message_label.configure(text="Invalid email or password.")
-            return
+        try:
+            auth = AuthService(Database())
+            user = auth.login(email, password)
 
-        if user["status"] == "pending":
-            self.message_label.configure(text="Your staff application is still being verified.")
-            return
-        if user["status"] != "active":
-            self.message_label.configure(text="This account is not active.")
-            return
+            self.window.show_dashboard(user)
 
-        self.window.show_dashboard(user)
+        except AuthError as e:
+            self.message_label.configure(text=str(e))
+
+        except Exception as e:
+            self.message_label.configure(
+                text="Login failed. Please try again."
+            )
+            print("Login error:", e)
