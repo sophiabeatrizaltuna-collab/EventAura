@@ -12,7 +12,6 @@ class User(ABC):
         self._email = email
         self._status = status
 
-    # encapsulation: read-only access
     @property
     def id(self):
         return self._id
@@ -37,7 +36,6 @@ class User(ABC):
     def role(self):
         return self.ROLE
 
-    # polymorphism: each role supplies its own dashboard text
     @property
     @abstractmethod
     def dashboard_title(self):
